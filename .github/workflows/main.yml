@@ -174,45 +174,56 @@ jobs:
         run: docker push tbristol01/django-todolist:latest
 
   deploy-with-terraform:
-    name: Deploy with Terraform
+    name: Deploy with Terraform and Docker
     runs-on: ubuntu-latest
-    needs: publish-image
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
-        
+
       - name: Set up Node.js v16
         uses: actions/setup-node@v2
         with:
           node-version: '16'
-        
+
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
-          aws-access-key-id: '${{ secrets.TF_USER_AWS_KEY }}'
-          aws-secret-access-key: '${{ secrets.TF_USER_AWS_SECRET }}'
+          aws-access-key-id: ${{ secrets.TF_USER_AWS_KEY }}
+          aws-secret-access-key: ${{ secrets.TF_USER_AWS_SECRET }}
           aws-region: us-east-2
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v1
-        
+
       - name: Initialize Terraform
         run: terraform init
-        
+
       - name: Deploy Infrastructure
         run: terraform apply -auto-approve
-        
+
       - name: Store Infrastructure Outputs
         id: terraform_outputs
         run: |
           echo "::set-output name=instance_ip::$(terraform output instance_ip)"
           echo "::set-output name=security_group_id::$(terraform output security_group_id)"
-      
+
+      - name: Debug Terraform Outputs
+        run: |
+          INSTANCE_IP="${{ steps.terraform_outputs.outputs.instance_ip }}"
+          SECURITY_GROUP_ID="${{ steps.terraform_outputs.outputs.security_group_id }}"
+          echo "INSTANCE_IP: $INSTANCE_IP"
+          echo "SECURITY_GROUP_ID: $SECURITY_GROUP_ID"
+
       - name: Deploy Docker Application
         run: |
           # Get the instance IP and security group ID from Terraform outputs
           INSTANCE_IP="${{ steps.terraform_outputs.outputs.instance_ip }}"
           SECURITY_GROUP_ID="${{ steps.terraform_outputs.outputs.security_group_id }}"
+          
+          # Debug the values
+          echo "INSTANCE_IP in deploy step: $INSTANCE_IP"
+          echo "SECURITY_GROUP_ID in deploy step: $SECURITY_GROUP_ID"
           
           # Deploy Docker container to the EC2 instance
           ssh -o StrictHostKeyChecking=no ec2-user@$INSTANCE_IP "docker pull tbristol01/django-todolist:latest"

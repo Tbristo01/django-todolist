@@ -9,4 +9,9 @@ resource "aws_instance" "example" {
   tags = {
     Name = "oko-testing"
   }
+  
 }
+
+  output "instance_id" {
+    value = aws_instance.example.id
+  }

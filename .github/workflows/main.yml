@@ -1,66 +1,43 @@
-name: Deploy and Dockerize
+name: Dockerize and Deploy App to AWS ECS
 
 on:
   push:
     branches:
-      - dev
+      - main  # Change to your desired branch
 
 jobs:
-  deploy_and_dockerize:
-    name: Deploy to EC2 and Dockerize
+  build-and-deploy:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Build and Deploy to EC2
-        env:
-          PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-          HOSTNAME: ${{ secrets.SSH_HOST }}
-          USER_NAME: ${{ secrets.USER_NAME }}
-
-        run: |
-          echo "$PRIVATE_KEY" > private_key && chmod 600 private_key
-          ssh -o StrictHostKeyChecking=no -i private_key ${USER_NAME}@${HOSTNAME} '
-              # Now we have got access to EC2 and we will start the deploy.
-              cd /home/ubuntu/<PROJECT_DIRECTORY> &&
-              git checkout dev &&
-              git fetch --all &&
-              git reset --hard origin/dev &&
-              git pull origin dev &&
-              sudo npm i &&
-              sudo npm run build &&
-              sudo pm2 stop ./dist/index.js &&
-              sudo pm2 start ./dist/index.js
-              '
-
-      - name: Set up Docker
-        uses: actions/setup-python@v2
+      - name: Set up AWS CLI
+        uses: aws-actions/configure-aws-credentials@v1
         with:
-          python-version: '3.x'
-      - name: Build Docker image
-        run: docker build -t my-django-app .
-        working-directory: ./path/to/your/django/app  # Replace with your Django app directory
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1  # Change to your desired region
 
-      - name: Push Docker image to GitHub Container Registry (GHCR)
-        run: |
-          echo ${{ secrets.DOCKER_PASSWORD }} | docker login ghcr.io -u ${{ github.repository_owner }} --password-stdin
-          docker tag my-django-app ghcr.io/${{ github.repository_owner }}/my-django-app:${{ github.sha }}
-          docker push ghcr.io/${{ github.repository_owner }}/my-django-app:${{ github.sha }}
-
-      - name: Deploy Docker container to EC2
+      - name: Login to AWS ECR
+        id: login-ecr
+        run: aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin <your-aws-account-id>.dkr.ecr.us-east-1.amazonaws.com
         env:
-          PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-          HOSTNAME: ${{ secrets.SSH_HOST }}
-          USER_NAME: ${{ secrets.USER_NAME }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: us-east-1  # Change to your desired region
+          AWS_ACCOUNT_ID: <your-aws-account-id>
 
+      - name: Build Docker image
+        run: docker build -t my-app .
+
+      - name: Tag Docker image
+        run: docker tag my-app:latest ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com/my-app:latest
+
+      - name: Push Docker image to ECR
+        run: docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com/my-app:latest
+
+      - name: Deploy to AWS ECS
         run: |
-          echo "$PRIVATE_KEY" > private_key && chmod 600 private_key
-          ssh -o StrictHostKeyChecking=no -i private_key ${USER_NAME}@${HOSTNAME} '
-              # Now we have got access to EC2 and we will deploy the Docker container.
-              docker pull ghcr.io/${{ github.repository_owner }}/my-django-app:${{ github.sha }}
-              docker stop my-django-app || true
-              docker rm my-django-app || true
-              docker run -d --name my-django-app -p 8000:8000 ghcr.io/${{ github.repository_owner }}/my-django-app:${{ github.sha }}
-              '
+          aws ecs update-service --cluster <your-ecs-cluster> --service <your-ecs-service> --force-new-deployment

@@ -200,8 +200,11 @@ jobs:
       - name: Login to DockerHub
         run: docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_ACCESS_TOKEN }}
 
+      - name: Stop docker container
+        run: docker stop my-django-app  
+      
       - name: Delete old docker container
-        run: docker rm -f my-django-app    
+        run: docker rm my-django-app  
 
       - name: Pull Docker image
         run: docker pull tbristol01/django-todolist:latest

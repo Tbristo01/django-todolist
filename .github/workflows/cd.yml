@@ -11,24 +11,24 @@ jobs:
     runs-on: ubuntu-latest
     needs:
       - pre-production-workflow
-    steps:
-      - name: Set up Node.js v16
-        uses: actions/setup-node@v2
-        with:
-          node-version: '16'
-      - name: Checkout code
-        uses: actions/checkout@v2
-      - name: Login to DockerHub
-        run: >-
-          docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{
-          secrets.DOCKER_ACCESS_TOKEN }}
-      - name: Check if Docker container exists
-        id: check-container
-        run: |
-          if docker ps -aq -f name=my-django-app | grep -q .; then
-            echo "Container exists"
-            echo "::set-output name=container_exists::true"
-          else
-            echo "Container does not exist"
-            echo "::set-output name=container_exists::false"
-          fi
+      steps:
+        - name: Set up Node.js v16
+          uses: actions/setup-node@v2
+          with:
+            node-version: '16'
+        - name: Checkout code
+          uses: actions/checkout@v2
+        - name: Login to DockerHub
+          run: >-
+            docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{
+            secrets.DOCKER_ACCESS_TOKEN }}
+        - name: Check if Docker container exists
+          id: check-container
+          run: |
+            if docker ps -aq -f name=my-django-app | grep -q .; then
+              echo "Container exists"
+              echo "::set-output name=container_exists::true"
+            else
+              echo "Container does not exist"
+              echo "::set-output name=container_exists::false"
+            fi

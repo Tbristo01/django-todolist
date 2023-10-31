@@ -109,7 +109,7 @@ jobs:
       - name: Deploy to Sanbox
         env:
           PRIVATE_KEY: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
-          HOST: $HOST # EC2 instance's IP
+          HOST: ${{ env.MY_HOST }} # EC2 instance's IP
           USER: ec2-user # Replace with your EC2 instance's SSH username
         run: |
           # Save private key to a file
@@ -125,4 +125,4 @@ jobs:
           ENDSSH
       - name: Display External URL
         run: |
-          echo "Application can be accessed at: http://$HOST:8000/"
+          echo "Application can be accessed at: http://${{ env.MY_HOST }}:8000/"

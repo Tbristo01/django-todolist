@@ -14,16 +14,4 @@ jobs:
       
     - name: Deploy to EC2
       run: |
-        echo "$PRIVATE_KEY" > private_key.pem
-        chmod 600 private_key.pem
-        ssh -o StrictHostKeyChecking=no -i private_key.pem $USER@$HOST << 'ENDSSH'
-          docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_ACCESS_TOKEN }}
-          docker pull tbristol01/django-todolist:latest
-          docker stop django-todolist || true
-          docker rm django-todolist || true
-          docker run -d -p 8000:8000 --name django-todolist tbristol01/django-todolist:latest
-        ENDSSH
-        
-    - name: Display External URL
-      run: |
-        echo "Application can be accessed at: http://${{ secrets.HOST }} :8000/"
+        echo "${{ secrets.HOST }} " 

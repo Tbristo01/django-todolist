@@ -1,17 +1,48 @@
-name: Deploy to EC2
+name: Pre-Production Workflow
 
 on: [push, pull_request]
+
 jobs:
-  deploy:
+  scanning:
+    name: GitGuardian Scan
     runs-on: ubuntu-latest
-    env:
-      PRIVATE_KEY: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
-      HOST: ${{ secrets.HOST }}  # EC2 instance's IP from secrets
-      USER: ec2-user             # Replace with your EC2 instance's SSH username
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+        with:
+          node-version: '16'
+      - uses: GitGuardian/ggshield-action@v1.20.0
+        env:
+          GITHUB_PUSH_BEFORE_SHA: ${{ github.event.before }}
+          GITHUB_PUSH_BASE_SHA: ${{ github.event.base }}
+          GITHUB_DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+          GITGUARDIAN_API_KEY: ${{ secrets.GITGUARDIAN_API_KEY }}
+
+
+  sanbox:
+    runs-on: ubuntu-latest
     steps:
     - name: Checkout code
       uses: actions/checkout@v2
-      
-    - name: Deploy to EC2
+
+    - name: Deploy to Sanbox
+      env:
+        PRIVATE_KEY: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
+        HOST: 54.85.91.143  # EC2 instance's IP
+        USER: ec2-user      # Replace with your EC2 instance's SSH username
       run: |
-        echo "${{ secrets.HOST }} " 
+        # Save private key to a file
+        echo "$PRIVATE_KEY" > private_key.pem
+        chmod 600 private_key.pem
+        # SSH into EC2 and pull latest Docker image and run it
+        ssh -o StrictHostKeyChecking=no -i private_key.pem $USER@$HOST << 'ENDSSH'
+          docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_ACCESS_TOKEN }}
+          docker pull tbristol01/django-todolist:latest
+          docker stop django-todolist || true
+          docker rm django-todolist || true
+          docker run -d -p 8000:8000 --name django-todolist tbristol01/django-todolist:latest
+        ENDSSH
+    - name: Display External URL
+      run: |
+        echo "Application can be accessed at: http:// 54.85.91.143:8000/"
+        

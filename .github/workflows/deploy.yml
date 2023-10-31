@@ -27,3 +27,7 @@ jobs:
           docker rm django-todolist || true
           docker run -d -p 8000:8000 --name django-todolist tbristol01/django-todolist:latest
         ENDSSH
+
+    - name: Display External URL
+      run: |
+        echo "Application can be accessed at: http://$HOST:8000/"

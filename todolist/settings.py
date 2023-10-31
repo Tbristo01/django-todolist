@@ -25,7 +25,7 @@ SECRET_KEY = os.environ.get('SECRET_KEY', 'default_secret_key')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['54.85.91.143']
 
 DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
 

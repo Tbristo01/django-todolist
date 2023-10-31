@@ -59,7 +59,7 @@ jobs:
           DJANGO_DB_PASSWORD: django
           DJANGO_DB_HOST: localhost
           DJANGO_DB_PORT: 5432
-          DJANGO_SECRET_KEY: ${{ secrets.SECRET_KEY }}
+          SECRET_KEY: ${{ secrets.SECRET_KEY }}
 
   build-and-scan:
     name: Build and Scan Docker Image

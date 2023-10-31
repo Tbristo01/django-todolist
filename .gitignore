@@ -21,3 +21,4 @@ results
 logs
 *.logs
 venv
+.cache_ggshield

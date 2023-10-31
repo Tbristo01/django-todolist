@@ -10,6 +10,13 @@ JS  | [jQuery](https://jquery.com/)
 
 I've also build a quite similar app in Flask: https://github.com/rtzll/flask-todolist
 
+## Quick Start
+
+1. **Install Python**: Download and install from [python.org](https://www.python.org/downloads/).
+2. **Navigate**: Use `cd path/to/directory` in a terminal to navigate to `quick_start.py`.
+3. **Run**: Execute with `python quick_start.py`.
+4. **Observe**: Check the terminal for output.
+
 
 ## Explore
 Try it out by installing the requirements. (Works only with python >= 3.8, due to Django 4)

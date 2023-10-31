@@ -28,3 +28,5 @@ jobs:
           docker rm django-todolist || true
           docker run -d -p 8000:8000 --name django-todolist tbristol01/django-todolist:latest
         ENDSSH
+        - name: Run Docker Container
+        run: sudo docker run -p 8000:8000 --name my-django-app tbristol01/django-todolist

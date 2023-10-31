@@ -1,12 +1,6 @@
 name: Deploy to EC2
 
-on:
-  push:
-    branches:
-      - main  # Trigger this workflow on push to main branch
-  pull_request:
-    branches:
-      - main  # Trigger this workflow on pull requests to main branch
+on: [push, pull_request]
 
 jobs:
   deploy:
